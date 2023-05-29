@@ -1,69 +1,44 @@
-// Step 1: load data or create some data
-const data = [
-  { r: 255, g: 0, b: 0, color: "red-ish" },
-  { r: 254, g: 0, b: 0, color: "red-ish" },
-  { r: 253, g: 0, b: 0, color: "red-ish" },
-  { r: 0, g: 255, b: 0, color: "green-ish" },
-  { r: 0, g: 254, b: 0, color: "green-ish" },
-  { r: 0, g: 253, b: 0, color: "green-ish" },
-  { r: 0, g: 0, b: 255, color: "blue-ish" },
-  { r: 0, g: 0, b: 254, color: "blue-ish" },
-  { r: 0, g: 0, b: 253, color: "blue-ish" },
-];
+let handpose;
+let video;
+let hands = [];
 
-// Step 2: set your neural network options
-const options = {
-  task: "classification",
-  debug: true,
-};
+function setup() {
+  createCanvas(640, 480);
+  video = createCapture(VIDEO);
+  video.size(width, height);
 
-// Step 3: initialize your neural network
-const nn = ml5.neuralNetwork(options);
+  handpose = ml5.handpose(video, modelReady);
 
-// Step 4: add data to the neural network
-data.forEach((item) => {
-  const inputs = {
-    r: item.r,
-    g: item.g,
-    b: item.b,
-  };
-  const output = {
-    color: item.color,
-  };
+  // This sets up an event that fills the global variable "predictions"
+  // with an array every time new hand poses are detected
+  handpose.on("hand", results => {
+    hands = results;
+  });
 
-  nn.addData(inputs, output);
-});
-
-// Step 5: normalize your data;
-nn.normalizeData();
-
-// Step 6: train your neural network
-const trainingOptions = {
-  epochs: 32,
-  batchSize: 12,
-};
-nn.train(trainingOptions, finishedTraining);
-
-// Step 7: use the trained model
-function finishedTraining() {
-  classify();
+  // Hide the video element, and just show the canvas
+  video.hide();
 }
 
-// Step 8: make a classification
-function classify() {
-  const input = {
-    r: 255,
-    g: 0,
-    b: 0,
-  };
-  nn.classify(input, handleResults);
+function modelReady() {
+  console.log("Model ready!");
 }
 
-// Step 9: define a function to handle the results of your classification
-function handleResults(error, result) {
-  if (error) {
-    console.error(error);
-    return;
+function draw() {
+  image(video, 0, 0, width, height);
+
+  // We can call both functions to draw all keypoints and the skeletons
+  drawKeypoints();
+}
+
+// A function to draw ellipses over the detected keypoints
+function drawKeypoints() {
+  for (let i = 0; i < hands.length; i += 1) {
+    const hand = hands[i];
+    for (let j = 0; j < hand.landmarks.length; j += 1) {
+      const keypoint = hand.landmarks[j];
+      fill(0, 255, 0);
+      noStroke();
+      ellipse(keypoint[0], keypoint[1], 10, 10);
+    }
   }
-  console.log(result); // {label: 'red', confidence: 0.8};
 }
