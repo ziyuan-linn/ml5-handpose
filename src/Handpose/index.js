@@ -7,13 +7,13 @@
  * Handpose: Palm detector and hand-skeleton finger tracking in the browser
  * Ported and integrated from all the hard work by: https://github.com/tensorflow/tfjs-models/tree/master/handpose
  */
-
-import * as tf from "@tensorflow/tfjs";
-import * as handposeCore from "@tensorflow-models/handpose";
+import *as tf from "@tensorflow/tfjs"
+import "@mediapipe/hands";
+import * as handPoseDetection from "@tensorflow-models/hand-pose-detection";
 import { EventEmitter } from "events";
 import callCallback from "../utils/callcallback";
 import handleArguments from "../utils/handleArguments";
-import { mediaReady } from '../utils/imageUtilities';
+import { mediaReady } from "../utils/imageUtilities";
 
 class Handpose extends EventEmitter {
   /**
@@ -41,7 +41,17 @@ class Handpose extends EventEmitter {
    * @return {this} the Handpose model.
    */
   async loadModel() {
-    this.model = await handposeCore.load(this.config);
+    const mediaPipeHands = handPoseDetection.SupportedModels.MediaPipeHands;
+    const modelConfig = {
+      ...this.config,
+      runtime: "mediapipe",
+      solutionPath: "../node_modules/@mediapipe/hands",
+    };
+
+    this.model = await handPoseDetection.createDetector(
+      mediaPipeHands,
+      modelConfig
+    );
     this.modelReady = true;
 
     if (this.video) {
